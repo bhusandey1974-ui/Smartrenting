@@ -249,7 +249,7 @@ fun OwnerDashboardScreen(viewModel: RentViewModel) {
     if (showAddPropertyDialog) {
         AddPropertyDialog(
             onDismiss = { showAddPropertyDialog = false },
-            onAdd = { n, addr, c, a, on, op ->
+            onAdd = { n: String, addr: String, c: String, a: String, on: String, op: String ->
                 viewModel.addProperty(n, addr, c, a, on, op)
                 showAddPropertyDialog = false
             }
@@ -260,7 +260,7 @@ fun OwnerDashboardScreen(viewModel: RentViewModel) {
         AddRoomDialog(
             propertyName = currentProperty.name,
             onDismiss = { showAddRoomDialog = false },
-            onAdd = { no, type, rent, rate ->
+            onAdd = { no: String, type: String, rent: Double, rate: Double ->
                 viewModel.addRoom(currentProperty.id, no, type, rent, rate)
                 showAddRoomDialog = false
             }
@@ -272,7 +272,7 @@ fun OwnerDashboardScreen(viewModel: RentViewModel) {
             tenants = currentTenants,
             rooms = currentRooms,
             onDismiss = { showAddBillDialog = false },
-            onGenerate = { rId, tId, month, base, prev, cur, rate ->
+            onGenerate = { rId: String, tId: String, month: String, base: Double, prev: Double, cur: Double, rate: Double ->
                 viewModel.generateBill(currentProperty.id, rId, tId, month, base, prev, cur, rate, 200.0)
                 showAddBillDialog = false
             }
