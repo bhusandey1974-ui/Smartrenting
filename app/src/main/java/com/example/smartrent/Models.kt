@@ -2,7 +2,7 @@ package com.example.smartrent
 
 import java.util.UUID
 
-// Core Property Definition
+// Core Property Definition with GPS Map Coordinates
 data class Property(
     val id: String = UUID.randomUUID().toString(),
     val name: String,
@@ -10,7 +10,9 @@ data class Property(
     val city: String,
     val area: String,
     val ownerName: String,
-    val ownerPhone: String
+    val ownerPhone: String,
+    val latitude: Double = 23.8315,
+    val longitude: Double = 91.2868
 )
 
 // Unit / Room Definition
@@ -18,7 +20,7 @@ data class RoomUnit(
     val id: String = UUID.randomUUID().toString(),
     val propertyId: String,
     val roomNumber: String,
-    val roomType: String, // "Single Room", "1BHK", "2BHK", "PG"
+    val roomType: String,
     val baseRent: Double,
     val electricityRate: Double = 10.0,
     val isVacant: Boolean = true,
@@ -46,7 +48,7 @@ data class BillRecord(
     val propertyId: String,
     val roomId: String,
     val tenantId: String,
-    val monthYear: String, // e.g. "August 2026"
+    val monthYear: String,
     val baseRent: Double,
     val prevMeterReading: Double,
     val currentMeterReading: Double,
@@ -63,4 +65,3 @@ data class BillRecord(
     val totalAmount: Double
         get() = baseRent + electricityBill + maintenanceCharge
 }
-
