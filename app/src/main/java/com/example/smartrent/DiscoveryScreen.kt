@@ -1,6 +1,9 @@
 package com.example.smartrent
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -13,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -73,7 +77,6 @@ fun DiscoveryScreen(viewModel: RentViewModel) {
                 .background(BrandBackground)
                 .padding(padding)
         ) {
-            // Map Legend Status Bar
             Surface(
                 color = Color.White,
                 shadowElevation = 1.dp,
@@ -175,7 +178,6 @@ fun DiscoveryScreen(viewModel: RentViewModel) {
         }
     }
 
-    // Modal when user taps a house pin on the map
     selectedPropertyForModal?.let { prop ->
         val propRooms = rooms.filter { it.propertyId == prop.id }
         val vacantRooms = propRooms.filter { it.isVacant }
@@ -217,4 +219,226 @@ fun DiscoveryScreen(viewModel: RentViewModel) {
             onDismiss = { selectedRoomForDetail = null }
         )
     }
+}
+@Composable
+fun VacancyListingCard(
+    room: RoomUnit,
+    property: Property,
+    onClick: () -> Unit
+) {
+    val context = LocalContext.current
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(14.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = property.name,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = BrandDarkNavy
+                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.Place,
+                            contentDescription = null,
+                            tint = BrandSecondary,
+                            modifier = Modifier.size(13.dp)
+                        )
+                        Spacer(modifier = Modifier.width(3.dp))
+                        Text(
+                            text = "${property.area}, ${property.city}",
+                            fontSize = 12.sp,
+                            color = Color.Gray
+                        )
+                    }
+                }
+
+                Surface(
+                    color = Color(0xFFE8F5E9),
+                    shape = RoundedCornerShape(6.dp)
+                ) {
+                    Text(
+                        text = "🟢 VACANT",
+                        color = SuccessGreen,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+            }
+
+            Divider(
+                modifier = Modifier.padding(vertical = 10.dp),
+                thickness = 0.5.dp,
+                color = Color(0xFFEEEEEE)
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Unit ${room.roomNumber} • ${room.roomType}",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp
+                    )
+                    Text(
+                        text = "⭐ ${room.rating} (${room.reviewCount} reviews)",
+                        fontSize = 11.sp,
+                        color = Color.DarkGray
+                    )
+                }
+
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        text = formatCurrency(room.baseRent),
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 17.sp,
+                        color = BrandPrimary
+                    )
+                    Text("/ month", fontSize = 10.sp, color = Color.Gray)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                items(room.amenities) { tag ->
+                    Surface(
+                        color = BrandBackground,
+                        shape = RoundedCornerShape(6.dp)
+                    ) {
+                        Text(
+                            text = tag,
+                            fontSize = 10.sp,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+                            color = Color.DarkGray
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Button(
+                    onClick = {
+                        val geoUri = Uri.parse("geo:${property.latitude},${property.longitude}?q=${property.latitude},${property.longitude}(${Uri.encode(property.name)})")
+                        val mapIntent = Intent(Intent.ACTION_VIEW, geoUri)
+                        context.startActivity(mapIntent)
+                    },
+                    modifier = Modifier.weight(1.1f),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary),
+                    contentPadding = PaddingValues(vertical = 8.dp)
+                ) {
+                    Icon(Icons.Default.Navigation, contentDescription = null, modifier = Modifier.size(14.dp))
+                    Spacer(modifier = Modifier.width(3.dp))
+                    Text("Directions", fontSize = 11.sp)
+                }
+
+                Button(
+                    onClick = {
+                        val clean = property.ownerPhone.replace("+", "").replace(" ", "")
+                        val text = "Hello ${property.ownerName}, I saw your listing for Unit ${room.roomNumber} (${room.roomType}) at ${property.name} on SmartRent and I'm interested in renting it."
+                        val intent = Intent(
+                            Intent.ACTION_VIEW,
+                            Uri.parse("https://api.whatsapp.com/send?phone=$clean&text=${Uri.encode(text)}")
+                        )
+                        context.startActivity(intent)
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = SuccessGreen),
+                    contentPadding = PaddingValues(vertical = 8.dp)
+                ) {
+                    Icon(Icons.Default.Chat, contentDescription = null, modifier = Modifier.size(14.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("WhatsApp", fontSize = 11.sp)
+                }
+
+                OutlinedButton(
+                    onClick = {
+                        val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${property.ownerPhone}"))
+                        context.startActivity(intent)
+                    },
+                    modifier = Modifier.weight(0.9f),
+                    shape = RoundedCornerShape(8.dp),
+                    contentPadding = PaddingValues(vertical = 8.dp)
+                ) {
+                    Icon(Icons.Default.Phone, contentDescription = null, modifier = Modifier.size(14.dp))
+                    Spacer(modifier = Modifier.width(3.dp))
+                    Text("Call", fontSize = 11.sp)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun RoomDetailDialog(
+    room: RoomUnit,
+    property: Property,
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Column {
+                Text(property.name, fontWeight = FontWeight.Bold, fontSize = 17.sp)
+                Text("Unit ${room.roomNumber} • ${room.roomType}", fontSize = 13.sp, color = BrandPrimary)
+            }
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = room.description.ifBlank { "Clean, well-ventilated unit available for immediate move-in." },
+                    fontSize = 13.sp,
+                    color = Color.DarkGray
+                )
+                Divider(modifier = Modifier.padding(vertical = 4.dp))
+                Text("📍 Location: ${property.address}, ${property.area}, ${property.city}", fontSize = 12.sp)
+                Text("⚡ Meter: ₹${room.electricityRate}/unit", fontSize = 12.sp)
+                Text("👤 Owner: ${property.ownerName}", fontSize = 12.sp)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text("Amenities:", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text(room.amenities.joinToString(" • "), fontSize = 12.sp, color = Color.DarkGray)
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val geoUri = Uri.parse("geo:${property.latitude},${property.longitude}?q=${property.latitude},${property.longitude}(${Uri.encode(property.name)})")
+                    val mapIntent = Intent(Intent.ACTION_VIEW, geoUri)
+                    context.startActivity(mapIntent)
+                }
+            ) {
+                Text("Open Map Pin")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        }
+    )
 }
